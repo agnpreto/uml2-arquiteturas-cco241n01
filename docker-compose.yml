@@ -1,0 +1,19 @@
+services:
+  catalogo:
+    build: ./servicos/catalogo
+  estoque:
+    build: ./servicos/estoque
+  pagamento:
+    build: ./servicos/pagamento
+  notificacao:
+    build: ./servicos/notificacao
+  pedidos:
+    build: ./servicos/pedidos
+    environment:
+      CATALOGO_URL: http://catalogo:5001
+      ESTOQUE_URL: http://estoque:5002
+      PAGAMENTO_URL: http://pagamento:5003
+      NOTIFICACAO_URL: http://notificacao:5004
+    ports:
+      - "5000:5000"
+    depends_on: [catalogo, estoque, pagamento, notificacao]

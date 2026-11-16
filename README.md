@@ -5,56 +5,44 @@
 
 ## Equipe
 
-**Nome do time:** ____________________  
-**Modelo escolhido:** ___ (1 a 5)
+**Nome do time:** Marketplace SOA  
+**Modelo escolhido:** 4 (Marketplace com pagamento, arquitetura orientada a serviços)
 
 | Nome | Usuário do GitHub |
 | --- | --- |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
+| Pedro Henrique | pedroallencar |
+| Eduardo Victor | EduardoVitorr |
 
-## Modelos
+## Sobre o sistema
 
-| Modelo | Sistema | Arquitetura principal |
+Marketplace em que o cliente compra um produto e o sistema reserva o estoque, cobra o pagamento e avisa o cliente. Cada responsabilidade é um serviço independente, e o serviço de **Pedidos** orquestra a chamada aos demais (orquestração SOA). Se o pagamento falha, o estoque reservado é devolvido.
+
+| Serviço | Porta | Função |
 | --- | --- | --- |
-| 1 | Delivery de comida | Microsserviços com API Gateway |
-| 2 | Monitoramento de sensores | Orientada a eventos |
-| 3 | Sistema acadêmico | Camadas (3-tier) |
-| 4 | Marketplace com pagamento | Orientada a serviços (SOA) |
-| 5 | Chat em tempo real | Cliente-servidor |
+| `pedidos` | 5000 | Orquestrador do fluxo de compra (único exposto ao cliente) |
+| `catalogo` | 5001 | Lista e consulta produtos e preços |
+| `estoque` | 5002 | Consulta, reserva e libera unidades |
+| `pagamento` | 5003 | Simula o gateway de pagamento (cartão terminado em `0000` é recusado) |
+| `notificacao` | 5004 | Simula o envio de e-mail ao cliente |
 
-Cada modelo pode ser escolhido por **uma equipe só**. A descrição completa de cada modelo está no documento do trabalho, enviado pelo professor.
-
-## Hoje: dia de planejamento
-
-1. Um integrante clica em **Fork** (canto superior direito) e depois em **Create fork**.
-2. No fork, em **Settings → Collaborators → Add people**, adicione os colegas.
-3. No fork, edite este README (lápis ✏️): nome do time, modelo escolhido e integrantes. Clique em **Commit changes**.
-4. Dividam o trabalho e comecem os requisitos em `docs/requisitos.md`.
-
-⚠️ Não editem o repositório do professor, só o fork da equipe.
-
-## O que entregar
-
-| Arquivo | Conteúdo |
-| --- | --- |
-| `README.md` | Equipe, modelo e **como rodar** o sistema (um comando) |
-| `docs/requisitos.md` | 5 requisitos funcionais e 3 não funcionais |
-| `docs/arquitetura.png` | Diagrama da arquitetura |
-| `docs/sequencia.png` | Diagrama de sequência do fluxo principal |
-| `LOGS.md` | Logs do fluxo principal, copiados do terminal |
-| `docker-compose.yml` | Ou um script de execução descrito neste README |
-| `servicos/` | Uma pasta por componente |
-
-**Cada integrante deve ter pelo menos 3 commits** com mensagens claras.
+Documentação em `docs/`: [requisitos](docs/requisitos.md), [arquitetura](docs/arquitetura.png) e [diagrama de sequência](docs/sequencia.png).
 
 ## Como rodar
 
-(A equipe preenche: o comando para subir o sistema e como executar o fluxo principal.)
+Subir o sistema (requer Docker):
+
+```
+docker compose up --build
+```
+
+Em outro terminal, executar o fluxo principal (três cenários: compra aprovada, pagamento recusado e estoque insuficiente):
+
+```
+python fluxo.py
+```
+
+Os logs de cada serviço aparecem no terminal do `docker compose`. Um exemplo de execução está em [LOGS.md](LOGS.md).
 
 ## Entrega
 
-No fork, clique em **Contribute → Open pull request**, preencha o modelo que aparece e clique em **Create pull request**. Um Pull Request por equipe. Cada novo `git push` no fork atualiza o mesmo Pull Request até o prazo.
+Pull Request único do fork para o repositório do professor.
