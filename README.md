@@ -14,6 +14,8 @@
 | Yasmim Medeiros| Yazzymds |
 | Felipe Velarde | Felipeclave |
 | Rian Rosenberg | rianamarorosenberg-dotcom |
+| Maria Vitoria| mvitoriaaa |
+
 
 
 ## Modelos
