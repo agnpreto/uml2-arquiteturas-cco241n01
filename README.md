@@ -1,60 +1,78 @@
 # Trabalho de Análise e Projeto de Sistemas: Arquiteturas de Software
 
-**Disciplina:** Análise e Projeto de Sistemas (Ciência da Computação)  
+**Disciplina:** Análise e Projeto de Sistemas (Ciência da Computação)
 **Prazo:** 18/11/2026
 
 ## Equipe
 
-**Nome do time:** ____________________  
-**Modelo escolhido:** ___ (1 a 5)
+**Nome do time:** Monitoramento de sensores
+**Modelo escolhido:** 2 - Monitoramento de sensores (arquitetura orientada a eventos)
 
 | Nome | Usuário do GitHub |
-| --- | --- |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
+|------|-------------------|
+| Rafaela Martins | RafaelaMrtns |
+| Yasmim Medeiros | Yazzymds |
+| Felipe Velarde | Felipeclave |
+| Rian Rosenberg | rianamarorosenberg-dotcom |
+| Maria Vitoria | mvitoriaaa |
 
-## Modelos
+## Sobre o sistema
 
-| Modelo | Sistema | Arquitetura principal |
-| --- | --- | --- |
-| 1 | Delivery de comida | Microsserviços com API Gateway |
-| 2 | Monitoramento de sensores | Orientada a eventos |
-| 3 | Sistema acadêmico | Camadas (3-tier) |
-| 4 | Marketplace com pagamento | Orientada a serviços (SOA) |
-| 5 | Chat em tempo real | Cliente-servidor |
+Sistema de monitoramento ambiental para Manaus: estações de sensores medem **fumaça (ppm)** e **material particulado PM2.5 (µg/m³)** e o sistema detecta possíveis **focos de incêndio** e **piora da qualidade do ar**, avisando os responsáveis. O tema foi escolhido por causa do impacto das queimadas e da fumaça na cidade.
 
-Cada modelo pode ser escolhido por **uma equipe só**. A descrição completa de cada modelo está no documento do trabalho, enviado pelo professor.
+### Como funciona (arquitetura orientada a eventos)
 
-## Hoje: dia de planejamento
+Os serviços não se chamam diretamente: cada um publica e consome **eventos** num broker (Redis Pub/Sub), e por isso podem ser trocados ou cair de forma independente.
 
-1. Um integrante clica em **Fork** (canto superior direito) e depois em **Create fork**.
-2. No fork, em **Settings → Collaborators → Add people**, adicione os colegas.
-3. No fork, edite este README (lápis ✏️): nome do time, modelo escolhido e integrantes. Clique em **Commit changes**.
-4. Dividam o trabalho e comecem os requisitos em `docs/requisitos.md`.
+| Serviço | Papel | Consome | Publica |
+|---------|-------|---------|---------|
+| `servicos/sensor` | Simula as estações S1 (Distrito Industrial), S2 (Centro) e S3 (Reserva Ducke) | - | `leituras` |
+| `servicos/detector` | Classifica as leituras (NORMAL / ATENÇÃO / PERIGO) e gera alertas | `leituras` | `alertas` |
+| `servicos/notificador` | Avisa Defesa Civil, Bombeiros ou Vigilância em Saúde (simulado) | `alertas` | - |
+| `servicos/historico` | Grava leituras e alertas em SQLite | `leituras`, `alertas` | - |
 
-⚠️ Não editem o repositório do professor, só o fork da equipe.
+Tipos de alerta: `INCENDIO_SUSPEITO` (fumaça alta), `QUALIDADE_AR` (só PM2.5 alto) e `NORMALIZADO`.
 
-## O que entregar
-
-| Arquivo | Conteúdo |
-| --- | --- |
-| `README.md` | Equipe, modelo e **como rodar** o sistema (um comando) |
-| `docs/requisitos.md` | 5 requisitos funcionais e 3 não funcionais |
-| `docs/arquitetura.png` | Diagrama da arquitetura |
-| `docs/sequencia.png` | Diagrama de sequência do fluxo principal |
-| `LOGS.md` | Logs do fluxo principal, copiados do terminal |
-| `docker-compose.yml` | Ou um script de execução descrito neste README |
-| `servicos/` | Uma pasta por componente |
-
-**Cada integrante deve ter pelo menos 3 commits** com mensagens claras.
+Documentação: [`docs/requisitos.md`](docs/requisitos.md), [`docs/arquitetura.png`](docs/arquitetura.png), [`docs/sequencia.png`](docs/sequencia.png) e [`LOGS.md`](LOGS.md).
 
 ## Como rodar
 
-(A equipe preenche: o comando para subir o sistema e como executar o fluxo principal.)
+Pré-requisito: Docker com Docker Compose.
+
+**Um comando:**
+
+```bash
+docker compose up --build
+```
+
+### Fluxo principal (o que acontece ao rodar)
+O próprio sistema executa a simulação, sem precisar fazer mais nada. Em cerca de 20 segundos aparecem no terminal:
+
+1. **S2 (Centro):** a névoa faz o PM2.5 subir -> alerta `QUALIDADE_AR` (ATENÇÃO) -> depois normaliza.
+2. **S3 (Reserva Ducke):** fumaça e PM2.5 sobem juntos -> `INCENDIO_SUSPEITO` em ATENÇÃO -> PERIGO (aviso aos Bombeiros) -> normaliza.
+3. **S1 (Distrito Industrial):** fica sempre normal.
+
+O que cada serviço mostra: `[sensor]` leituras publicadas, `[detector]` alertas gerados, `[notificador]` avisos enviados, `[historico]` alertas gravados no banco.
+
+Para ver só os alertas: `docker compose logs -f detector notificador`
+Para parar: `Ctrl+C` e depois `docker compose down`.
+
+### Configuração (opcional, variáveis de ambiente)
+- detector: `FUMACA_ATENCAO` (150), `FUMACA_PERIGO` (300), `PM25_ATENCAO` (35), `PM25_PERIGO` (75), `CONFIRMACOES` (2)
+- sensor: `INTERVALO` (1 s entre leituras)
+
+Os limiares são valores didáticos para a simulação.
+
+## Estrutura do repositório
+
+```
+README.md
+LOGS.md
+docker-compose.yml
+docs/        requisitos.md, arquitetura.png, sequencia.png
+servicos/
+  sensor/  detector/  notificador/  historico/    (cada um com main.py, Dockerfile e requirements.txt)
+```
 
 ## Entrega
-
-No fork, clique em **Contribute → Open pull request**, preencha o modelo que aparece e clique em **Create pull request**. Um Pull Request por equipe. Cada novo `git push` no fork atualiza o mesmo Pull Request até o prazo.
+Pull Request do fork da equipe para o repositório do professor (Contribute -> Open pull request).

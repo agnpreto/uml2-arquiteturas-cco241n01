@@ -1,0 +1,32 @@
+services:
+  broker:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  sensor:
+    build: ./servicos/sensor
+    environment: { REDIS_HOST: broker, INTERVALO: "1" }
+    depends_on: { broker: { condition: service_healthy } }
+
+  detector:
+    build: ./servicos/detector
+    environment: { REDIS_HOST: broker }
+    depends_on: { broker: { condition: service_healthy } }
+
+  notificador:
+    build: ./servicos/notificador
+    environment: { REDIS_HOST: broker }
+    depends_on: { broker: { condition: service_healthy } }
+
+  historico:
+    build: ./servicos/historico
+    environment: { REDIS_HOST: broker, DB_PATH: /data/historico.db }
+    volumes: ["historico_data:/data"]
+    depends_on: { broker: { condition: service_healthy } }
+
+volumes:
+  historico_data:
